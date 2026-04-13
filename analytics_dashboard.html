@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maternal Mortality Analytics Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Mono:wght@500&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="analytics_dashboard.css?v=liveapi-2" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" defer></script>
+  <script src="analytics_dashboard.js?v=liveapi-2" defer></script>
+</head>
+<body>
+  <div class="ambient-layer" aria-hidden="true"></div>
+
+  <header class="topbar reveal">
+    <div>
+      <p class="eyebrow">Maternal Intelligence Platform</p>
+      <h1>Four-Algorithm Real Analytics Dashboard</h1>
+    </div>
+    <div class="topbar-actions">
+      <button id="reloadDataBtn" class="btn btn-primary">Reload Analytics</button>
+      <span id="dataModeBadge" class="mode-badge">Initializing...</span>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero reveal">
+      <div>
+        <h2>Predictive monitoring for maternal mortality outcomes</h2>
+        <p>
+          This interface unifies Linear Regression, Random Forest, XGBoost, and ARIMA into one visual analytics environment.
+          It renders model quality, algorithm-level forecasts, and a country-specific ensemble prediction engine.
+        </p>
+      </div>
+      <div class="status-card">
+        <h3>Data Status</h3>
+        <p id="statusText">Loading dataset and model outputs...</p>
+      </div>
+    </section>
+
+    <section class="kpi-grid">
+      <article class="kpi-card reveal">
+        <p class="kpi-label">Countries</p>
+        <p id="kpiCountries" class="kpi-value">-</p>
+      </article>
+      <article class="kpi-card reveal">
+        <p class="kpi-label">Year Window</p>
+        <p id="kpiYears" class="kpi-value">-</p>
+      </article>
+      <article class="kpi-card reveal">
+        <p class="kpi-label">Best Model (RMSE)</p>
+        <p id="kpiBestModel" class="kpi-value">-</p>
+      </article>
+      <article class="kpi-card reveal">
+        <p class="kpi-label">Forecast Rows</p>
+        <p id="kpiForecastRows" class="kpi-value">-</p>
+      </article>
+    </section>
+
+    <section class="workspace-grid">
+      <article class="panel controls reveal">
+        <div class="panel-title-row">
+          <h3>Prediction Lab</h3>
+          <p>Generate targeted analytics from the four algorithms</p>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Country Filter</span>
+            <input id="countryFilterInput" type="text" placeholder="Type country name..." />
+          </label>
+
+          <label class="field">
+            <span>Sort Countries</span>
+            <select id="countrySortSelect">
+              <option value="az">A-Z</option>
+              <option value="za">Z-A</option>
+              <option value="risk_high">Highest Latest MMR</option>
+              <option value="risk_low">Lowest Latest MMR</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Country</span>
+            <select id="countrySelect"></select>
+          </label>
+
+          <label class="field">
+            <span>Forecast Year</span>
+            <select id="forecastYearSelect"></select>
+          </label>
+
+          <label class="field">
+            <span>Feature View</span>
+            <select id="importanceModelSelect">
+              <option value="linear_regression">Linear Regression</option>
+              <option value="random_forest">Random Forest</option>
+              <option value="xgboost">XGBoost</option>
+            </select>
+          </label>
+
+          <button id="predictBtn" class="btn btn-secondary">Generate Real Analytics</button>
+        </div>
+
+        <div class="realtime-actions">
+          <button id="liveRefreshBtn" class="btn btn-primary">Refresh Live Now</button>
+          <button id="startAutoRefreshBtn" class="btn btn-secondary">Start Auto Refresh</button>
+          <button id="stopAutoRefreshBtn" class="btn btn-muted" disabled>Stop Auto Refresh</button>
+
+          <label class="field inline-field">
+            <span>Refresh Interval</span>
+            <select id="refreshIntervalSelect">
+              <option value="5000">5 sec</option>
+              <option value="10000" selected>10 sec</option>
+              <option value="15000">15 sec</option>
+              <option value="30000">30 sec</option>
+            </select>
+          </label>
+
+          <p id="lastUpdateText" class="subtle">Last update: -</p>
+        </div>
+
+        <div class="prediction-grid">
+          <article class="prediction-focus">
+            <p class="mini-label">Ensemble Prediction</p>
+            <p id="ensembleValue" class="primary-value">-</p>
+            <p id="riskTag" class="risk-pill">Risk: -</p>
+            <p id="confidenceText" class="subtle">Confidence: -</p>
+          </article>
+
+          <article class="prediction-breakdown">
+            <p class="mini-label">Algorithm Breakdown</p>
+            <div id="algorithmBreakdown" class="algo-breakdown-list"></div>
+          </article>
+        </div>
+      </article>
+
+      <article class="panel chart-panel reveal">
+        <div class="panel-title-row">
+          <h3>Model Benchmark</h3>
+          <p>Comparative test performance (lower RMSE is better)</p>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="modelBenchmarkChart"></canvas>
+        </div>
+      </article>
+
+      <article class="panel chart-panel reveal">
+        <div class="panel-title-row">
+          <h3>Country Forecast Timeline</h3>
+          <p>Historical trend plus algorithm projections</p>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="countryTrendChart"></canvas>
+        </div>
+      </article>
+
+      <article class="panel chart-panel reveal">
+        <div class="panel-title-row">
+          <h3>Feature Intelligence</h3>
+          <p>Top features and coefficients from selected model</p>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="featureChart"></canvas>
+        </div>
+      </article>
+
+      <article class="panel chart-panel reveal">
+        <div class="panel-title-row">
+          <h3>Live Error Profile</h3>
+          <p>MAE, RMSE, and R² profile across algorithms</p>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="rfHorizonChart"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="algo-cards-grid">
+      <article class="algo-card reveal" id="cardLinear">
+        <h3>Linear Regression</h3>
+        <p id="cardLinearText">Awaiting metrics...</p>
+      </article>
+      <article class="algo-card reveal" id="cardRandomForest">
+        <h3>Random Forest</h3>
+        <p id="cardRandomForestText">Awaiting metrics...</p>
+      </article>
+      <article class="algo-card reveal" id="cardXGBoost">
+        <h3>XGBoost</h3>
+        <p id="cardXGBoostText">Awaiting metrics...</p>
+      </article>
+      <article class="algo-card reveal" id="cardArima">
+        <h3>ARIMA</h3>
+        <p id="cardArimaText">Awaiting metrics...</p>
+      </article>
+    </section>
+
+    <section class="panel reveal guidance-panel">
+      <h3>Run Mode Guidance</h3>
+      <p>
+        For live API predictions, start the backend service using
+        <strong>run_backend_service.bat</strong> (or <strong>python notebook_backend_service.py</strong>).
+        The dashboard connects to <strong>http://127.0.0.1:5000/api</strong> and renders real-time analytics.
+        If the backend is unavailable, a fallback simulation mode remains active using dataset-driven trend analytics.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
